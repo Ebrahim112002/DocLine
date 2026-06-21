@@ -1,0 +1,68 @@
+[
+  {
+    "id": 1,
+    "name": "Square Hospitals Ltd.",
+    "image": "https://i.ibb.co.com/39M8NYxZ/image.png",
+    "description": "One of Bangladesh's leading tertiary care hospitals, offering advanced healthcare services with modern medical facilities and specialist consultations."
+  },
+  {
+    "id": 2,
+    "name": "Evercare Hospital Dhaka",
+    "image": "https://i.ibb.co.com/4v83jwY/image.png",
+    "description": "An internationally recognized multidisciplinary hospital known for its world-class healthcare standards and experienced medical professionals."
+  },
+  {
+    "id": 3,
+    "name": "United Hospital",
+    "image": "https://i.ibb.co.com/tpVdpjbX/image.png",
+    "description": "A trusted private healthcare institution providing comprehensive medical care through advanced technology and specialized services."
+  },
+  {
+    "id": 4,
+    "name": "Labaid Specialized Hospital",
+    "image": "https://i.ibb.co.com/60J1r7sQ/image.png",
+    "description": "A renowned healthcare provider offering specialized treatment, diagnostics, and patient-centered medical services."
+  },
+  {
+    "id": 5,
+    "name": "Popular Diagnostic Centre",
+    "image": "https://i.ibb.co.com/hxKdT7r5/image.png",
+    "description": "One of the country's most recognized diagnostic and healthcare networks, providing quality investigations and specialist consultations."
+  },
+  {
+    "id": 6,
+    "name": "Ibn Sina Specialized Hospital",
+    "image": "https://i.ibb.co.com/MwXM9py/image.png",
+    "description": "A well-established healthcare institution delivering affordable and reliable medical services across various specialties."
+  },
+  {
+    "id": 7,
+    "name": "BIRDEM General Hospital",
+    "image": "https://i.ibb.co.com/whZv0dfM/image.png",
+    "description": "A nationally recognized hospital specializing in diabetes, endocrine disorders, and comprehensive patient care."
+  },
+  {
+    "id": 8,
+    "name": "Asgar Ali Hospital",
+    "image": "https://i.ibb.co.com/WvyVnQSC/image.png",
+    "description": "A modern tertiary care hospital dedicated to delivering compassionate healthcare through expert medical teams."
+  },
+  {
+    "id": 9,
+    "name": "Bangladesh Specialized Hospital",
+    "image": "https://i.ibb.co.com/FLFn0LLp/image.png",
+    "description": "A reputed healthcare facility providing specialized treatments, diagnostics, and advanced medical support."
+  },
+  {
+    "id": 10,
+    "name": "Anwer Khan Modern Medical College Hospital",
+    "image": "https://i.ibb.co.com/F4ptGm8p/image.png",
+    "description": "A leading teaching and healthcare institution offering quality treatment through experienced physicians and modern facilities."
+  },
+  {
+    "id": 11,
+    "name": "Aalok Healthcare & Hospital",
+    "image": "https://i.ibb.co.com/WW2HqRRL/image.png",
+    "description": "A trusted healthcare provider known for accessible medical services, diagnostics, and specialist consultations."
+  }
+]
