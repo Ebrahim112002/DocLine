@@ -309,6 +309,9 @@ const Navbar = () => {
                 <button className="w-full py-4 text-lg font-medium border border-gray-300 rounded-2xl hover:bg-gray-50">
                   লগইন করুন
                 </button>
+                <NavLink to="/register" className="w-full"><button className="w-full py-4 text-lg font-semibold bg-blue-600 text-white rounded-2xl hover:bg-blue-700 shadow-md">
+                  নিবন্ধন করুন
+                </button></NavLink>
                 <button className="w-full py-4 text-lg font-semibold bg-blue-600 text-white rounded-2xl hover:bg-blue-700 shadow-md">
                   নিবন্ধন করুন
                 </button>
