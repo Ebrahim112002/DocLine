@@ -7,6 +7,9 @@ import Home from "../Home/Home";
 import AboutUs from "../Components/About_us/AboutUs";
 import Advice from "../Components/Advice/Advice";
 import Register from "../Context/Auth/Register/Register";
+import Login from "../Context/Auth/Login/Login";
+import AdminDashboard from "../Admin/Admin_dashboard/AdminDashboard";
+import Manage_users from "../Admin/Manage_users/ManageUsers";
 
 
 export const router = createBrowserRouter([
@@ -30,7 +33,22 @@ export const router = createBrowserRouter([
       {
         path:'/register',
         element:<Register></Register>
+      },
+      {
+        path:'/login',
+        element:<Login></Login>
       }
     ]
+
   },
+  {
+  path: "/admin_dashboard",
+  element:<AdminDashboard></AdminDashboard>, 
+  children: [
+    {
+      path: "manageUsers",
+      element: <Manage_users /> 
+    },
+  ]
+  }
 ]);

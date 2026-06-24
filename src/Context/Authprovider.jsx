@@ -41,7 +41,7 @@ const createUser = async (email, password, name, photoURL) => {
   };
 
   // ৩. ইউজার লগআউট (Logout)
-  const logoutUser = () => {
+  const logout = () => {
     setLoading(true);
     return signOut(auth);
   };
@@ -78,7 +78,7 @@ const createUser = async (email, password, name, photoURL) => {
     setLoading,
     createUser,
     loginUser,
-    logoutUser
+    logout
   };
 
   return (
