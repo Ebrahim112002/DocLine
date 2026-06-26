@@ -1,23 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { Users, Shield, Trash2, UserCheck, AlertCircle } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { AuthContext } from '../../Context/AuthContext'; 
 
 const ManageUsers = () => {
+  const { user } = useContext(AuthContext); 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ১. সব ইউজার গেট করা [READ ALL]
+  // ১. সব ইউজার গেট করার মূল ফাংশন
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      
-      const token = localStorage.getItem('access-token'); 
+      const token = localStorage.getItem('access-token'); // প্রতিবার রিকোয়েস্টের সময় লেটেস্ট টোকেন নেওয়া হবে
 
       const res = await fetch('http://localhost:3000/users', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          // 'authorization': `Bearer ${token}`   // প্রয়োজন হলে আনকমেন্ট করো
+          'authorization': token ? `Bearer ${token}` : '',
+          'email': user?.email || '',          
+          'x-user-email': user?.email || ''  
         }
       });
 
@@ -27,11 +30,7 @@ const ManageUsers = () => {
       }
 
       const data = await res.json();
-      if (Array.isArray(data)) {
-        setUsers(data);
-      } else {
-        setUsers([]);
-      }
+      setUsers(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching users:", error.message);
       Swal.fire({
@@ -45,14 +44,17 @@ const ManageUsers = () => {
     }
   };
 
-  // ✅ ইউজ কম্পোনেন্ট লোড হওয়ার সাথে সাথে ডাটা লোড করবে
+  // ইউজার ইমেইল এভেলেবল হলেই ডাটা ফেচ হবে
   useEffect(() => {
-                       fetchUsers();
-  }, []);
+    if (user?.email) {
+      fetchUsers();
+    }
+  }, [user?.email]);
 
-  // ২. রোল পরিবর্তন করা
+  // ২. রোল পরিবর্তন (Make Admin / Make Regular User)
   const handleRoleChange = async (id, currentRole) => {
     const newRole = currentRole === 'admin' ? 'user' : 'admin';
+    const token = localStorage.getItem('access-token');
     
     Swal.fire({
       title: `রোল পরিবর্তন করতে চান?`,
@@ -70,7 +72,9 @@ const ManageUsers = () => {
             method: 'PATCH',
             headers: { 
               'Content-Type': 'application/json',
-              // 'authorization': `Bearer ${localStorage.getItem('access-token')}`
+              'authorization': token ? `Bearer ${token}` : '',
+              'email': user?.email || '',
+              'x-user-email': user?.email || ''
             },
             body: JSON.stringify({ role: newRole })
           });
@@ -80,14 +84,8 @@ const ManageUsers = () => {
             throw new Error(errorData.message || 'রোল আপডেট করতে ব্যর্থ।');
           }
 
-          const data = await res.json();
-          
-          if (data.modifiedCount > 0 || data.success) {
-            Swal.fire('সফল হয়েছে!', 'ইউজারের রোল আপডেট করা হয়েছে।', 'success');
-            fetchUsers(); // রিফ্রেশ
-          } else {
-            Swal.fire('কোনো পরিবর্তন হয়নি!', 'ডাটাবেজে কোনো তথ্য আপডেট হয়নি।', 'info');
-          }
+          Swal.fire('সফল হয়েছে!', 'ইউজারের রোল আপডেট করা হয়েছে।', 'success');
+          fetchUsers(); // লিস্ট রিফ্রেশ
         } catch (error) {
           Swal.fire('অ্যাকশন রিজেক্টেড!', error.message, 'error');
         }
@@ -97,6 +95,8 @@ const ManageUsers = () => {
 
   // ৩. ইউজার ডিলিট করা
   const handleDeleteUser = async (id) => {
+    const token = localStorage.getItem('access-token');
+
     Swal.fire({
       title: 'আপনি কি নিশ্চিত?',
       text: "এই ইউজারটিকে স্থায়ীভাবে ডিলিট করা হবে!",
@@ -112,7 +112,10 @@ const ManageUsers = () => {
           const res = await fetch(`http://localhost:3000/users/${id}`, {
             method: 'DELETE',
             headers: {
-              // 'authorization': `Bearer ${localStorage.getItem('access-token')}`
+              'Content-Type': 'application/json',
+              'authorization': token ? `Bearer ${token}` : '',
+              'email': user?.email || '',
+              'x-user-email': user?.email || ''
             }
           });
 
@@ -121,12 +124,8 @@ const ManageUsers = () => {
             throw new Error(errorData.message || 'ইউজার ডিলিট করতে ব্যর্থ।');
           }
 
-          const data = await res.json();
-          
-          if (data.deletedCount > 0 || data.success) {
-            Swal.fire('ডিলিট হয়েছে!', 'ইউজার সফলভাবে রিমুভ করা হয়েছে।', 'success');
-            fetchUsers();
-          }
+          Swal.fire('ডিলিট হয়েছে!', 'ইউজার সফলভাবে রিমুভ করা হয়েছে।', 'success');
+          fetchUsers(); // লিস্ট রিফ্রেশ
         } catch (error) {
           Swal.fire('ভুল হয়েছে!', error.message, 'error');
         }
@@ -134,7 +133,7 @@ const ManageUsers = () => {
     });
   };
 
-  // লোডিং স্টেট
+  // লোডিং স্ক্রিন
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center h-96 gap-4">
@@ -146,7 +145,7 @@ const ManageUsers = () => {
 
   return (
     <div className="w-full">
-      {/* হেডার পার্ট */}
+      {/* টপ বার */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-5 mb-6">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl shadow-sm">
@@ -163,7 +162,7 @@ const ManageUsers = () => {
         </div>
       </div>
 
-      {/* টেবিল */}
+      {/* ইউজার টেবিল */}
       <div className="overflow-x-auto w-full rounded-2xl border border-gray-100 shadow-sm bg-white">
         <table className="table table-zebra w-full text-left border-collapse">
           <thead className="bg-gray-50/75 text-gray-700 text-sm font-semibold">
@@ -177,8 +176,8 @@ const ManageUsers = () => {
           </thead>
           
           <tbody className="text-gray-600 text-sm font-medium">
-            {users.map((u) => (
-              <tr key={u._id} className="hover:bg-blue-50/20 transition-colors border-b border-gray-100 last:border-none">
+            {users.map((u, index) => (
+              <tr key={u._id || index} className="hover:bg-blue-50/20 transition-colors border-b border-gray-100 last:border-none">
                 <td className="py-4 px-6">
                   <div className="flex items-center gap-3">
                     <div className="avatar">
@@ -192,7 +191,7 @@ const ManageUsers = () => {
                     </div>
                     <div>
                       <div className="font-bold text-gray-900 truncate max-w-[180px]">{u.name || 'নাম নেই'}</div>
-                      <div className="text-[11px] text-gray-400 font-mono select-all">UID: {u.uid?.slice(0, 10)}...</div>
+                      <div className="text-[11px] text-gray-400 font-mono select-all">UID: {u.uid?.slice(0, 10) || 'N/A'}...</div>
                     </div>
                   </div>
                 </td>
@@ -247,7 +246,7 @@ const ManageUsers = () => {
                 <td colSpan="5" className="text-center py-16 text-gray-400 bg-gray-50/30">
                   <AlertCircle className="w-10 h-10 mx-auto mb-3 opacity-40 text-blue-600" />
                   <p className="font-bold text-gray-700">কোনো ইউজার তথ্য পাওয়া যায়নি</p>
-                  <p className="text-xs text-gray-400 mt-1">ডাটাবেজে কোনো ডেটা নেই</p>
+                  <p className="text-xs text-gray-400 mt-1">ডাটাবেজে কোনো ডেটা নেই অথবা অথেন্টিকেশন এরর হয়েছে।</p>
                 </td>
               </tr>
             )}

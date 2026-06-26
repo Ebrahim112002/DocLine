@@ -2,14 +2,16 @@ import React, { useState, useContext } from 'react';
 import { useForm } from 'react-hook-form';
 import Swal from 'sweetalert2'; 
 import { AuthContext } from '../../AuthContext';
-import axiosSecure from '../../../api/axiosSecure';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios'; 
+
 const Register = () => {
   const { createUser } = useContext(AuthContext);
   const [uploading, setUploading] = useState(false);
+  const navigate = useNavigate();
   
-const IMGBB_API_KEY = import.meta.env.VITE_IMGBB_API_KEY;
-const IMGBB_API_URL = `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`;
+  const IMGBB_API_KEY = import.meta.env.VITE_IMGBB_API_KEY;
+  const IMGBB_API_URL = `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`;
 
   const {
     register,
@@ -18,82 +20,69 @@ const IMGBB_API_URL = `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`;
     formState: { errors, isSubmitting },
   } = useForm();
   
-
   const onSubmit = async (data) => {
-    console.log(data)
+    console.log(data);
     try {
       let imageUrl = null;
 
-    // ইমেজ আপলোড লজিক...
-    if (data.image && data.image[0]) {
-      setUploading(true);
-      const formData = new FormData();
-      formData.append('image', data.image[0]);
+      /* ==== ১. ইমেজ আপলোড লজিক (ImgBB) ==== */
+      if (data.image && data.image[0]) {
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('image', data.image[0]);
 
-      try {
-    
-        const imgbbResponse = await axios.post(IMGBB_API_URL, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data', 
-          },
-        });
+        try {
+          const imgbbResponse = await axios.post(IMGBB_API_URL, formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data', 
+            },
+          });
 
-        console.log("ImgBB Response Details:", imgbbResponse.data);
+          console.log("ImgBB Response Details:", imgbbResponse.data);
 
-        if (imgbbResponse.data.success) {
-          imageUrl = imgbbResponse.data.data.display_url;
+          if (imgbbResponse.data.success) {
+            imageUrl = imgbbResponse.data.data.display_url;
+          }
+        } catch (imgError) {
+          console.error("ImgBB Upload API Error:", imgError.response?.data || imgError.message);
+        } finally {
+          setUploading(false);
         }
-      } catch (imgError) {
-        console.error("ImgBB Upload API Error:", imgError.response?.data || imgError.message);
-      } finally {
-        setUploading(false);
       }
-    }
 
-      /* ==== ২. ফায়ারবেস সাইনআপ ==== */
-      const firebaseResult = await createUser(data.email, data.password, data.name, imageUrl);
+      /* ==== ২. ফায়ারবেস সাইনআপ + ব্যাকএন্ড সিঙ্ক (একসাথে) ==== */
+      // AuthProvider-এর createUser-ই ফায়ারবেস শেষ করে ব্যাকএন্ডের /users এ ডেটা পাঠিয়ে দিবে
+      const firebaseResult = await createUser(data.email, data.password, data.name, imageUrl || "");
 
-      /* ==== ৩. ব্যাকএন্ডে পাঠানোর জন্য সম্পূর্ণ অবজেক্ট (হুবহু ফর্মের ভ্যালু ধরে রাখা) ==== */
-      const userData = {
-        uid: firebaseResult.user.uid,
-        name: data.name,
-        email: data.email,
-        photoURL: imageUrl || "", 
-        phone: data.phone || "",         // null না পাঠিয়ে ফাঁকা স্ট্রিং দেওয়া নিরাপদ
-        gender: data.gender || "",       
-        dateOfBirth: data.dateOfBirth || "", 
-      };
-
-      /* ==== ৪. ব্যাকএন্ডে ডেটা পাঠানো এবং সাকসেস হ্যান্ডলিং ==== */
-      const response = await axiosSecure.post('/users', userData);
-      
-      if (response.data.insertedId || response.data.message === 'User already exists') {
+      /* ==== ৩. সাকসেস হ্যান্ডলিং ও রিডাইরেকশন ==== */
+      if (firebaseResult) {
         Swal.fire({
           title: 'Success!',
           text: 'Your account has been created successfully! 🎉',
           icon: 'success',
           confirmButtonColor: '#3085d6',
         }).then(() => {
-          reset(); // সুইট অ্যালার্টের OK বাটনে ক্লিক করলে তবেই ফর্ম রিসেট হবে!
+          reset(); 
+          navigate('/'); // লগইন সাকসেসফুল হলে হোম পেজ বা ড্যাশবোর্ডে নিয়ে যাবে
         });
       }
+
     } catch (error) {
       setUploading(false);
       console.error("Registration Error:", error);
       Swal.fire({
         title: 'Error!',
-        text: error.message || 'Something went wrong!',
+        text: error.message || 'Something went wrong during registration!',
         icon: 'error',
       });
     }
   };
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-base-200 py-12 px-4">
-      {/* max-w-md দিয়ে উইডথ এবং শ্যাডো দিয়ে কার্ড লুক সুন্দর করা হয়েছে */}
       <div className="card w-full max-w-md bg-base-100 shadow-2xl border border-base-300">
         <div className="card-body p-6 sm:p-8">
           
-          {/* আপনার রিকোয়ারমেন্ট অনুযায়ী নতুন হেডলাইন */}
           <div className="text-center mb-6">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-primary">Register Your Account</h2>
             <p className="text-sm text-gray-500 mt-1">Get started by creating your account</p>
@@ -165,7 +154,7 @@ const IMGBB_API_URL = `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`;
               />
             </div>
 
-            {/* ৬. জেন্ডার এবং ডেট অফ বার্থ (এক লাইনে ২ কলাম করে স্পেস বাঁচানো হয়েছে) */}
+            {/* ৬. জেন্ডার এবং ডেট অফ বার্থ */}
             <div className="grid grid-cols-2 gap-4">
               <div className="form-control">
                 <label className="label py-1"><span className="label-text font-semibold text-sm">Gender</span></label>

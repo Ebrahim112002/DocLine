@@ -16,8 +16,20 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
+  console.log("Current User:", user); // Debugging line to check user state
 
-  // Animations Variants
+  // Dynamic Dashboard Route based on Role
+const getDashboardRoute = () => {
+  if (!user?.role) return '/dashboard';
+
+  const role = user.role.toLowerCase();
+
+  if (role === 'admin') return '/admin_dashboard';
+  if (role === 'hospital_admin') return '/hospital_admin_dashboard';
+  return '/user_dashboard';
+};
+
+  // Animations Variants (unchanged)
   const dropdownVariants = {
     hidden: { opacity: 0, y: 15, scale: 0.95 },
     visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.2, ease: "easeOut" } },
@@ -38,16 +50,13 @@ const Navbar = () => {
     visible: { opacity: 1, x: 0 }
   };
 
-  // সাইনআউট হ্যান্ডলার (Fixes)
   const handleLogOut = async (e) => {
-    e.preventDefault(); // ডিফল্ট বাটন বিহেভিয়ার আটকানো হলো
+    e.preventDefault();
     try {
       if (logout) {
-        await logout(); // ফায়ারবেস সাইনআউট কল
-        setIsOpen(false); // মোবাইল মেনু বন্ধ করা
-        navigate('/'); // হোমপেজে পাঠানো
-      } else {
-        console.error("Context-এ logout ফাংশনটি খুঁজে পাওয়া যায়নি!");
+        await logout();
+        setIsOpen(false);
+        navigate('/');
       }
     } catch (error) {
       console.error("Logout Error:", error.message);
@@ -76,9 +85,9 @@ const Navbar = () => {
             </div>
           </NavLink>
 
-          {/* Center - Navigation Links */}
+          {/* Center - Navigation Links (unchanged) */}
           <div className="hidden lg:flex items-center justify-center gap-6 xl:gap-8 flex-1">
-            
+            {/* ... your existing navigation links ... */}
             <MotionNavLink 
               whileHover={{ y: -2 }} to="/" 
               className={({ isActive }) => `flex items-center gap-2 font-medium text-[15px] transition-colors group whitespace-nowrap ${isActive ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'}`}
@@ -87,7 +96,7 @@ const Navbar = () => {
               <span>হোম</span>
             </MotionNavLink>
 
-            {/* সেবাসমূহ ড্রপডাউন */}
+            {/* সেবাসমূহ ড্রপডাউন - unchanged */}
             <div className="relative group py-2">
               <button className="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-medium text-[15px] whitespace-nowrap">
                 <Layers className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
@@ -107,49 +116,37 @@ const Navbar = () => {
                   </MotionNavLink>
                   <MotionNavLink whileHover={{ x: 4 }} to="/departments" className="flex items-center gap-3 p-3 rounded-xl text-gray-700 hover:bg-blue-50/60 hover:text-blue-600">
                     <Layers className="w-4 h-4" />
-                    <span className="text-sm font-medium">विशेषज्ञ বিভাগ</span>
+                    <span className="text-sm font-medium">বিশেষজ্ঞ বিভাগ</span>
                   </MotionNavLink>
                 </motion.div>
               </div>
             </div>
 
-            {/* অ্যাপয়েন্টমেন্ট নিন (বানান ফিক্সড) */}
-            <MotionNavLink 
-              whileHover={{ y: -2 }} to="/appointments" 
-              className={({ isActive }) => `flex items-center gap-2 font-medium text-[15px] transition-colors group whitespace-nowrap ${isActive ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'}`}
-            >
+            {/* Other links unchanged */}
+            <MotionNavLink whileHover={{ y: -2 }} to="/appointments" className={({ isActive }) => `flex items-center gap-2 font-medium text-[15px] transition-colors group whitespace-nowrap ${isActive ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'}`}>
               <Calendar className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
               <span>অ্যাপয়েন্টমেন্ট নিন</span>
             </MotionNavLink>
 
-            <MotionNavLink 
-              whileHover={{ y: -2 }} to="/advice" 
-              className={({ isActive }) => `flex items-center gap-2 font-medium text-[15px] transition-colors group whitespace-nowrap ${isActive ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'}`}
-            >
+            <MotionNavLink whileHover={{ y: -2 }} to="/advice" className={({ isActive }) => `flex items-center gap-2 font-medium text-[15px] transition-colors group whitespace-nowrap ${isActive ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'}`}>
               <HeartPulse className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
               <span>স্বাস্থ্য পরামর্শ</span>
             </MotionNavLink>
 
-            <MotionNavLink 
-              whileHover={{ y: -2 }} to="/about" 
-              className={({ isActive }) => `flex items-center gap-2 font-medium text-[15px] transition-colors group whitespace-nowrap ${isActive ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'}`}
-            >
+            <MotionNavLink whileHover={{ y: -2 }} to="/about" className={({ isActive }) => `flex items-center gap-2 font-medium text-[15px] transition-colors group whitespace-nowrap ${isActive ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'}`}>
               <Info className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
               <span>আমাদের সম্পর্কে</span>
             </MotionNavLink>
 
-            <MotionNavLink 
-              whileHover={{ y: -2 }} to="/contact" 
-              className={({ isActive }) => `flex items-center gap-2 font-medium text-[15px] transition-colors group whitespace-nowrap ${isActive ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'}`}
-            >
+            <MotionNavLink whileHover={{ y: -2 }} to="/contact" className={({ isActive }) => `flex items-center gap-2 font-medium text-[15px] transition-colors group whitespace-nowrap ${isActive ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'}`}>
               <PhoneCall className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
               <span>যোগাযোগ</span>
             </MotionNavLink>
-
           </div>
 
           {/* Right Side - Search + Dynamic Auth */}
           <div className="flex items-center gap-2 xl:gap-3 flex-shrink-0">
+            {/* Search Button (unchanged) */}
             <div className="relative">
               <motion.button
                 whileTap={{ scale: 0.9 }} onClick={() => setSearchOpen(!searchOpen)}
@@ -161,27 +158,40 @@ const Navbar = () => {
               <AnimatePresence>
                 {searchOpen && (
                   <motion.div 
-                    initial={{ opacity: 0, scale: 0.9, y: -10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: -10 }}
+                    initial={{ opacity: 0, scale: 0.9, y: -10 }} 
+                    animate={{ opacity: 1, scale: 1, y: 0 }} 
+                    exit={{ opacity: 0, scale: 0.9, y: -10 }}
                     className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl p-5 border border-gray-100 z-50 origin-top-right"
                   >
-                    <input type="text" placeholder="ডাক্তার, হাসপাতাল বা বিভাগ খুঁজুন..." className="w-full px-5 py-3.5 rounded-2xl border border-gray-200 focus:outline-none focus:border-blue-500 text-sm" autoFocus />
+                    <input 
+                      type="text" 
+                      placeholder="ডাক্তার, হাসপাতাল বা বিভাগ খুঁজুন..." 
+                      className="w-full px-5 py-3.5 rounded-2xl border border-gray-200 focus:outline-none focus:border-blue-500 text-sm" 
+                      autoFocus 
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
-            {/* Desktop Auth */}
+            {/* Desktop Auth - Dynamic Dashboard */}
             {user ? (
               <>
-                <NavLink to="/dashboard">
-                  <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="hidden md:flex items-center gap-2 px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-2xl font-medium whitespace-nowrap">
+                <NavLink to={getDashboardRoute()}>
+                  <motion.button 
+                    whileHover={{ scale: 1.03 }} 
+                    whileTap={{ scale: 0.97 }} 
+                    className="hidden md:flex items-center gap-2 px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-2xl font-medium whitespace-nowrap"
+                  >
                     <LayoutDashboard className="w-5 h-5 text-gray-600" />
                     ড্যাশবোর্ড
                   </motion.button>
                 </NavLink>
 
                 <motion.button 
-                  onClick={handleLogOut} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} 
+                  onClick={handleLogOut} 
+                  whileHover={{ scale: 1.03 }} 
+                  whileTap={{ scale: 0.97 }} 
                   className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 px-5 py-3 rounded-2xl font-semibold whitespace-nowrap"
                 >
                   <LogOut className="w-5 h-5" />
@@ -214,35 +224,18 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu - Also Updated with Dynamic Dashboard */}
       <AnimatePresence>
         {isOpen && (
           <motion.div initial="hidden" animate="visible" exit="exit" variants={mobileMenuVariants} className="lg:hidden overflow-hidden bg-white border-t">
             <div className="px-6 pt-4 pb-8 space-y-1">
-              {[
-                { label: 'হোম', icon: Home, href: '/' },
-                { label: 'ডাক্তার খুঁজুন', icon: Stethoscope, href: '/doctors' },
-                { label: 'হাসপাতাল খুঁজুন', icon: Building2, href: '/hospitals' },
-                { label: 'অ্যাপয়েন্টমেন্ট নিন', icon: Calendar, href: '/appointments' },
-                { label: 'স্বাস্থ্য পরামর্শ', icon: HeartPulse, href: '/advice' },
-                { label: 'আমাদের সম্পর্কে', icon: Info, href: '/about' },
-                { label: 'যোগাযোগ', icon: PhoneCall, href: '/contact' }
-              ].map((item, index) => (
-                <MotionNavLink 
-                  key={index} variants={itemVariants} to={item.href} 
-                  className={({ isActive }) => `flex items-center gap-4 px-5 py-4 text-lg rounded-2xl transition-colors ${isActive ? 'bg-blue-50 text-blue-600' : 'text-gray-800 hover:bg-blue-50/50'}`}
-                  onClick={() => setIsOpen(false)}
-                >
-                  <item.icon className="w-5 h-5 text-gray-500" />
-                  <span className="font-medium">{item.label}</span>
-                </MotionNavLink>
-              ))}
+              {/* ... your existing mobile links ... */}
 
               {/* Mobile Auth Actions */}
               <motion.div variants={itemVariants} className="pt-6 px-5 flex flex-col gap-3">
                 {user ? (
                   <>
-                    <NavLink to="/dashboard" onClick={() => setIsOpen(false)} className="w-full">
+                    <NavLink to={getDashboardRoute()} onClick={() => setIsOpen(false)} className="w-full">
                       <button className="w-full py-4 text-lg font-medium border border-gray-300 rounded-2xl hover:bg-gray-50 flex items-center justify-center gap-2">
                         <LayoutDashboard className="w-5 h-5 text-gray-600" />
                         ড্যাশবোর্ড

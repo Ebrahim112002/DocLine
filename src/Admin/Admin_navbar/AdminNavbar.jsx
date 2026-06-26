@@ -14,7 +14,8 @@ const AdminNavbar = () => {
   return (
     <aside className="w-full md:w-72 bg-white border-r border-gray-100 min-h-screen flex flex-col sticky top-0">
       {/* এডমিন হেডার ব্র্যান্ডিং */}
-      <div className="p-6 border-b border-gray-100 flex items-center gap-3">
+      <NavLink to='/' className="cursor-pointer">
+         <div className="p-6 border-b border-gray-100 flex items-center gap-3">
         <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-md shadow-blue-500/20">
           <ShieldAlert className="w-5 h-5" />
         </div>
@@ -23,6 +24,8 @@ const AdminNavbar = () => {
           <p className="text-xs font-medium text-blue-600">DocLine Control Suite</p>
         </div>
       </div>
+      </NavLink>
+     
 
       {/* নেভিগেশন লিঙ্কসমূহ */}
       <nav className="flex-1 px-4 py-6 space-y-1">
