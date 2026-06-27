@@ -23,6 +23,7 @@ import ManageAssistants from "../Hospitals/ManageAssistants/ManageAssistants";
 import ManageTests from "../Hospitals/ManageTests/ManageTests";
 import HospitalDetails from "../Components/HospitalsList/HospitalDetails";
 import HospitalsPage from "../Components/HospitalsList/HospitalsPage";
+import HospitalAdminBookings from "../Hospitals/HospitalAdminBookings/HospitalAdminBookings";
 
 
 export const router = createBrowserRouter([
@@ -117,6 +118,10 @@ export const router = createBrowserRouter([
         path: "manageTests",
         element: <ManageTests></ManageTests>
       },
+      {
+        path: "manageBookings",
+        element: <HospitalAdminBookings></HospitalAdminBookings>
+      }
 
 
 

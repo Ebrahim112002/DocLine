@@ -10,7 +10,7 @@ const HospitalDashboardLayout = () => {
     { name: 'Hospital Profile', path: '/hospital_admin_dashboard/profile', icon: Building },
     { name: 'Doctors', path: '/hospital_admin_dashboard/doctors', icon: Stethoscope },
     { name: 'Manage Tests', path: '/hospital_admin_dashboard/manageTests', icon: Layers },
-    { name: 'Appointments', path: '/hospital_admin_dashboard/appointments', icon: CalendarCheck },
+    { name: 'Manage Appointments', path: '/hospital_admin_dashboard/manageBookings', icon: CalendarCheck },
     { name: 'Queue Management', path: '/hospital_admin_dashboard/queue', icon: ArrowLeftRight },
     { name: 'Assistants', path: '/hospital_admin_dashboard/manageAssistants', icon: Users },
     { name: 'Reports', path: '/hospital_dashboard/reports', icon: ClipboardList },
