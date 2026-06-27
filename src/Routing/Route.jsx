@@ -26,6 +26,8 @@ import HospitalsPage from "../Components/HospitalsList/HospitalsPage";
 import HospitalAdminBookings from "../Hospitals/HospitalAdminBookings/HospitalAdminBookings";
 import UserDashboard from "../Users/UserDashboard/UserDashboard";
 import UserHome from "../Users/UserHome/UserHome";
+import UserProfile from "../Users/UserProfile/UserProfile";
+import UserBookings from "../Users/UserBookings/UserBookings";
 
 
 export const router = createBrowserRouter([
@@ -136,6 +138,14 @@ export const router = createBrowserRouter([
       {
         index: true,
         element:<UserHome></UserHome>
+      },
+      {
+        path: "profile",
+        element: <UserProfile></UserProfile>
+      },
+      {
+        path: "bookings",
+        element: <UserBookings></UserBookings>
       },
      
 

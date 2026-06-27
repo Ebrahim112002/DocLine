@@ -1,25 +1,31 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useContext } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { AuthContext } from '../../Context/AuthContext';
 
-const HospitalAdminBookings = ({ adminEmail = "hospital2@gmail.com" }) => {
+
+const HospitalAdminBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const {user}=useContext(AuthContext)
 
   // Sorting & Filtering States
   const [sortType, setSortType] = useState('all'); // 'all', 'today', 'doctor', 'test'
   const [dateSort, setDateSort] = useState('newest'); // 'newest', 'oldest'
 
-  const fetchBookings = async () => {
+   const fetchBookings = async () => {
+    if (!user?.email) return;
+
     try {
       setLoading(true);
       setError(null);
 
+      // ডাইনামিক ইমেইল দিয়ে ডাটা ফেচ করা হচ্ছে[cite: 9]
       const response = await axios.get(
-        `http://localhost:3000/hospitals/bookings/${adminEmail}`
+        `http://localhost:3000/hospitals/bookings/${user.email}`
       );
 
       const data = Array.isArray(response.data) ? response.data : [];
@@ -33,14 +39,17 @@ const HospitalAdminBookings = ({ adminEmail = "hospital2@gmail.com" }) => {
   };
 
   useEffect(() => {
-    fetchBookings();
-  }, [adminEmail]);
+    if (user?.email) {
+      fetchBookings();
+    } else {
+      setLoading(false);
+      setError("Please login as a Hospital Admin.");
+    }
+  }, [user?.email]);
 
-  // Filtered & Sorted Data
   const filteredBookings = useMemo(() => {
     let result = [...bookings];
 
-    // Filter by Type
     if (sortType === 'doctor') {
       result = result.filter(b => b.bookingType === 'doctor');
     } else if (sortType === 'test') {
@@ -52,7 +61,6 @@ const HospitalAdminBookings = ({ adminEmail = "hospital2@gmail.com" }) => {
       );
     }
 
-    // Sort by Date
     result.sort((a, b) => {
       const dateA = new Date(a.appointmentDate);
       const dateB = new Date(b.appointmentDate);
@@ -72,22 +80,12 @@ const HospitalAdminBookings = ({ adminEmail = "hospital2@gmail.com" }) => {
       );
 
       if (response.data.success) {
-        Swal.fire({
-          title: 'Success!',
-          text: `Booking marked as ${newStatus}`,
-          icon: 'success',
-          timer: 2000,
-          showConfirmButton: false
-        });
+        Swal.fire({ title: 'Success!', text: `Booking marked as ${newStatus}`, icon: 'success', timer: 2000, showConfirmButton: false });
         fetchBookings();
       }
     } catch (error) {
       console.error(error);
-      Swal.fire({
-        title: 'Error',
-        text: "Failed to update status.",
-        icon: 'error'
-      });
+      Swal.fire({ title: 'Error', text: "Failed to update status.", icon: 'error' });
     }
   };
 
@@ -198,14 +196,16 @@ const HospitalAdminBookings = ({ adminEmail = "hospital2@gmail.com" }) => {
                       </div>
                     </td>
                     <td className="p-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${booking.bookingType === 'doctor' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${booking.bookingType === 'doctor'
+                       ? `Dr. ${booking.selectedDoctor?.doctorName || 'N/A'}`
+                          : booking.selectedTests?.map(t => t.testName).join(', ') || 'N/A'}`}>
                         {booking.bookingType}
                       </span>
                     </td>
                     <td className="p-4">
                       {booking.bookingType === 'doctor' 
-                        ? `Dr. ${booking.selectedDoctor?.name || 'N/A'}`
-                        : booking.selectedTests?.map(t => t.name).join(', ') || 'N/A'}
+                        ? `Dr. ${booking.selectedDoctor?.doctorName || 'N/A'}`
+                        : booking.selectedTests?.map(t => t.testName).join(', ') || 'N/A'}
                     </td>
                     <td className="p-4">{new Date(booking.appointmentDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
                     <td className="p-4 font-bold text-emerald-600">৳ {booking.totalAmount}</td>
@@ -316,7 +316,7 @@ const HospitalAdminBookings = ({ adminEmail = "hospital2@gmail.com" }) => {
                   {selectedBooking.bookingType === 'doctor' && selectedBooking.selectedDoctor && (
                     <p className="flex justify-between py-2">
                       <span className="text-gray-600">Doctor</span>
-                      <span className="font-semibold">Dr. {selectedBooking.selectedDoctor.name} ({selectedBooking.selectedDoctor.specialty})</span>
+                      <span className="font-semibold">Dr. {selectedBooking.selectedDoctor.doctorName} ({selectedBooking.selectedDoctor.specialty})</span>
                     </p>
                   )}
 

@@ -21,7 +21,7 @@ const Register = () => {
   } = useForm();
   
   const onSubmit = async (data) => {
-    console.log(data);
+    console.log("Form Data:", data);   // Debug এর জন্য
     try {
       let imageUrl = null;
 
@@ -32,29 +32,28 @@ const Register = () => {
         formData.append('image', data.image[0]);
 
         try {
-          const imgbbResponse = await axios.post(IMGBB_API_URL, formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data', 
-            },
-          });
-
-          console.log("ImgBB Response Details:", imgbbResponse.data);
-
+          const imgbbResponse = await axios.post(IMGBB_API_URL, formData);
           if (imgbbResponse.data.success) {
             imageUrl = imgbbResponse.data.data.display_url;
           }
         } catch (imgError) {
-          console.error("ImgBB Upload API Error:", imgError.response?.data || imgError.message);
+          console.error("ImgBB Upload Error:", imgError.response?.data || imgError.message);
         } finally {
           setUploading(false);
         }
       }
 
-      /* ==== ২. ফায়ারবেস সাইনআপ + ব্যাকএন্ড সিঙ্ক (একসাথে) ==== */
-      // AuthProvider-এর createUser-ই ফায়ারবেস শেষ করে ব্যাকএন্ডের /users এ ডেটা পাঠিয়ে দিবে
-      const firebaseResult = await createUser(data.email, data.password, data.name, imageUrl || "");
+      /* ==== ২. ফায়ারবেস + ব্যাকএন্ড সিঙ্ক ==== */
+      const firebaseResult = await createUser(
+        data.email, 
+        data.password, 
+        data.name, 
+        imageUrl || "",
+        data.phone || "",           // নতুন
+        data.gender || "",          // নতুন
+        data.dateOfBirth || null    // নতুন
+      );
 
-      /* ==== ৩. সাকসেস হ্যান্ডলিং ও রিডাইরেকশন ==== */
       if (firebaseResult) {
         Swal.fire({
           title: 'Success!',
@@ -63,7 +62,7 @@ const Register = () => {
           confirmButtonColor: '#3085d6',
         }).then(() => {
           reset(); 
-          navigate('/'); // লগইন সাকসেসফুল হলে হোম পেজ বা ড্যাশবোর্ডে নিয়ে যাবে
+          navigate('/'); 
         });
       }
 
@@ -90,7 +89,7 @@ const Register = () => {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             
-            {/* ১. ফুল নাম */}
+            {/* Full Name */}
             <div className="form-control">
               <label className="label py-1"><span className="label-text font-semibold text-sm">Full Name *</span></label>
               <input
@@ -102,7 +101,7 @@ const Register = () => {
               {errors.name && <span className="text-error text-xs mt-1">{errors.name.message}</span>}
             </div>
 
-            {/* ২. প্রোফাইল পিকচার */}
+            {/* Profile Picture */}
             <div className="form-control">
               <label className="label py-1"><span className="label-text font-semibold text-sm">Profile Picture</span></label>
               <input
@@ -113,7 +112,7 @@ const Register = () => {
               />
             </div>
 
-            {/* ৩. ইমেইল */}
+            {/* Email */}
             <div className="form-control">
               <label className="label py-1"><span className="label-text font-semibold text-sm">Email Address *</span></label>
               <input
@@ -128,7 +127,7 @@ const Register = () => {
               {errors.email && <span className="text-error text-xs mt-1">{errors.email.message}</span>}
             </div>
 
-            {/* ৪. পাসওয়ার্ড */}
+            {/* Password */}
             <div className="form-control">
               <label className="label py-1"><span className="label-text font-semibold text-sm">Password *</span></label>
               <input
@@ -143,7 +142,7 @@ const Register = () => {
               {errors.password && <span className="text-error text-xs mt-1">{errors.password.message}</span>}
             </div>
 
-            {/* ৫. ফোন নম্বর */}
+            {/* Phone */}
             <div className="form-control">
               <label className="label py-1"><span className="label-text font-semibold text-sm">Phone Number</span></label>
               <input
@@ -154,7 +153,7 @@ const Register = () => {
               />
             </div>
 
-            {/* ৬. জেন্ডার এবং ডেট অফ বার্থ */}
+            {/* Gender + Date of Birth */}
             <div className="grid grid-cols-2 gap-4">
               <div className="form-control">
                 <label className="label py-1"><span className="label-text font-semibold text-sm">Gender</span></label>
@@ -176,7 +175,7 @@ const Register = () => {
               </div>
             </div>
 
-            {/* সাবমিট বাটন */}
+            {/* Submit Button */}
             <div className="form-control pt-4">
               <button 
                 type="submit" 

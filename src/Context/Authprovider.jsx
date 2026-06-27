@@ -16,7 +16,7 @@ const AuthProvider = ({ children }) => {
   const [triggerFetch, setTriggerFetch] = useState(0); // ডাটাবেজে সেভ হওয়ার পর রোল চেক ট্রিগার করার জন্য
 
   // ১. ইউজার রেজিস্ট্রেশন (Register)
-  const createUser = async (email, password, name, photoURL) => {
+  const createUser = async (email, password, name, photoURL, phone, gender, dateOfBirth) => {
     setLoading(true);
     try {
       // ক. ফায়ারবেসে অ্যাকাউন্ট তৈরি
@@ -25,7 +25,8 @@ const AuthProvider = ({ children }) => {
       // খ. ফায়ারবেস প্রোফাইল আপডেট (Name & Photo)
       await updateProfile(result.user, {
         displayName: name,
-        photoURL: photoURL
+        photoURL: photoURL,
+        
       });
 
       // গ. ব্যাকএন্ডের মেইন রাউটে ডাটা পাঠানো
@@ -38,7 +39,10 @@ const AuthProvider = ({ children }) => {
           uid: result.user.uid,
           name: name,
           email: email,
-          photoURL: photoURL
+          photoURL: photoURL,
+          phone: phone,           // 🔥
+          gender: gender,         // 🔥
+          dateOfBirth: dateOfBirth // 🔥
         })
       });
 

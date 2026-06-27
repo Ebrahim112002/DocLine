@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { AuthContext } from '../../Context/AuthContext';
 
 const HospitalDetails = () => {
   const { id } = useParams();
@@ -15,6 +16,8 @@ const HospitalDetails = () => {
   const [chosenDoctor, setChosenDoctor] = useState(null);
   const [chosenTests, setChosenTests] = useState([]);
 
+  const { user } = useContext(AuthContext);
+
   // Patient Information
   const [patientName, setPatientName] = useState('');
   const [patientAge, setPatientAge] = useState('');
@@ -22,7 +25,6 @@ const HospitalDetails = () => {
   const [patientPhone, setPatientPhone] = useState('');
   const [patientProblem, setPatientProblem] = useState('');
   const [appointmentDate, setAppointmentDate] = useState('');
-
   const [bookingSubmitLoading, setBookingSubmitLoading] = useState(false);
 
   useEffect(() => {
@@ -37,7 +39,6 @@ const HospitalDetails = () => {
         setLoading(false);
       }
     };
-
     if (id) fetchHospitalDetails();
   }, [id]);
 
@@ -52,11 +53,24 @@ const HospitalDetails = () => {
 
   if (error || !data) {
     return (
-      <div className="text-center my-16 p-6 text-red-500 font-semibold">{error || 'No data found.'}</div>
+      <div className="text-center my-16 p-6 text-red-500 font-semibold">
+        {error || 'No data found.'}
+      </div>
     );
   }
 
   const { hospital, doctors, tests } = data;
+
+  // Calculate Total Amount
+  const calculateTotal = () => {
+    if (bookingType === 'doctor' && chosenDoctor) {
+      return chosenDoctor.visitFee || 0;
+    }
+    if (bookingType === 'test') {
+      return chosenTests.reduce((sum, test) => sum + (test.testFee || 0), 0);
+    }
+    return 0;
+  };
 
   const handleTestCheckboxChange = (test) => {
     setBookingType('test');
@@ -75,87 +89,39 @@ const HospitalDetails = () => {
     document.getElementById('booking-section')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const calculateTotal = () => {
-    if (bookingType === 'doctor' && chosenDoctor) return chosenDoctor.visitFee;
-    if (bookingType === 'test') return chosenTests.reduce((sum, test) => sum + test.testFee, 0);
-    return 0;
-  };
-
-  const handleBookingSubmit = async (e) => {
+  const handleBooking = async (e) => {
     e.preventDefault();
-
-    if (!patientName || !patientAge || !patientGender || !patientPhone || !appointmentDate) {
-      Swal.fire({
-        title: 'Missing Information',
-        text: 'Please fill in all required patient details.',
-        icon: 'warning'
-      });
-      return;
-    }
-
-    if (bookingType === 'doctor' && !chosenDoctor) {
-      Swal.fire({ title: 'Error', text: 'Please select a doctor.', icon: 'warning' });
-      return;
-    }
-    if (bookingType === 'test' && chosenTests.length === 0) {
-      Swal.fire({ title: 'Error', text: 'Please select at least one test.', icon: 'warning' });
-      return;
-    }
-
     setBookingSubmitLoading(true);
 
-    try {
-      const payload = {
-        hospitalId: hospital.hospitalId || hospital._id,
-        hospitalName: hospital.hospitalName,
-        bookingType,
-        appointmentDate,
-        patientName,
-        patientAge: parseInt(patientAge),
-        patientGender,
-        patientPhone,
-        patientProblem: patientProblem.trim() || (bookingType === 'doctor' ? 'General consultation' : ''),
-        totalAmount: calculateTotal(),
-        selectedDoctor: bookingType === 'doctor' ? {
-          id: chosenDoctor._id,
-          name: chosenDoctor.doctorName,
-          specialty: chosenDoctor.specialty,
-          fee: chosenDoctor.visitFee
-        } : null,
-        selectedTests: bookingType === 'test' ? 
-          chosenTests.map(t => ({
-            id: t._id,
-            name: t.testName,
-            code: t.testCode,
-            fee: t.testFee
-          })) : []
-      };
+    const totalAmount = calculateTotal();
 
-      const response = await axios.post('http://localhost:3000/bookings/create', payload, {
-        headers: {
-          'Content-Type': 'application/json',
-          'email': 'hospital2@gmail.com'
-        }
+    const bookingData = {
+      hospitalId: id,
+      hospitalName: hospital?.hospitalName,
+      bookingType,
+      appointmentDate,
+      patientName,
+      patientAge,
+      patientGender,
+      patientPhone,
+      patientProblem,
+      totalAmount,
+      selectedDoctor: bookingType === 'doctor' ? chosenDoctor : null,
+      selectedTests: bookingType === 'test' ? chosenTests : []
+    };
+
+    try {
+      const response = await axios.post(`http://localhost:3000/bookings/create`, bookingData, {
+        headers: { email: user?.email }
       });
 
       if (response.data.success) {
-        Swal.fire({
-          title: 'Success!',
-          text: 'Your appointment request has been submitted successfully!',
-          icon: 'success',
-          confirmButtonColor: '#4f46e5'
-        });
-
-        // Reset form
+        Swal.fire('Success!', 'Booking placed successfully!', 'success');
         resetBookingForm();
       }
     } catch (err) {
       console.error("Booking Error:", err);
-      Swal.fire({
-        title: 'Error!',
-        text: err.response?.data?.message || "Booking failed. Please try again.",
-        icon: 'error'
-      });
+      Swal.fire('Error', err.response?.data?.message || 'Failed to book appointment', 'error');
     } finally {
       setBookingSubmitLoading(false);
     }
@@ -205,14 +171,14 @@ const HospitalDetails = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <div className="flex gap-4 border-b border-gray-200 mb-6 bg-white p-2 rounded-2xl shadow-sm">
-              <button 
-                onClick={() => setActiveTab('doctors')} 
+              <button
+                onClick={() => setActiveTab('doctors')}
                 className={`flex-1 py-3 text-center font-bold rounded-xl transition-all ${activeTab === 'doctors' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100'}`}
               >
                 👨‍⚕️ Doctors ({doctors?.length || 0})
               </button>
-              <button 
-                onClick={() => setActiveTab('tests')} 
+              <button
+                onClick={() => setActiveTab('tests')}
                 className={`flex-1 py-3 text-center font-bold rounded-xl transition-all ${activeTab === 'tests' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100'}`}
               >
                 🔬 Tests ({tests?.length || 0})
@@ -236,7 +202,7 @@ const HospitalDetails = () => {
                     </div>
                     <div className="text-center sm:text-right">
                       <div className="text-lg font-black text-emerald-600 mb-2">৳ {doctor.visitFee}</div>
-                      <button 
+                      <button
                         onClick={() => handleDoctorSelect(doctor)}
                         className={`px-6 py-2.5 text-sm font-bold rounded-xl transition-all ${chosenDoctor?._id === doctor._id ? 'bg-emerald-600 text-white' : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'}`}
                       >
@@ -264,7 +230,7 @@ const HospitalDetails = () => {
                       {tests.map((test) => (
                         <tr key={test._id} className="hover:bg-slate-50/40">
                           <td className="p-4 text-center">
-                            <input 
+                            <input
                               type="checkbox"
                               checked={chosenTests.some(t => t._id === test._id)}
                               onChange={() => handleTestCheckboxChange(test)}
@@ -290,13 +256,13 @@ const HospitalDetails = () => {
           <div id="booking-section" className="lg:col-span-1">
             <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-lg sticky top-6">
               <h2 className="text-xl font-extrabold text-gray-800 border-b border-gray-100 pb-3 mb-4">💳 Checkout Summary</h2>
-              
+
               {!bookingType ? (
                 <div className="text-center py-12 text-gray-400">
                   Select a doctor or test to proceed
                 </div>
               ) : (
-                <form onSubmit={handleBookingSubmit} className="space-y-5">
+                <form onSubmit={handleBooking} className="space-y-5">
                   {/* Service Summary */}
                   <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                     <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Selected Service</p>
@@ -318,34 +284,33 @@ const HospitalDetails = () => {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Patient Full Name <span className="text-red-500">*</span></label>
-                      <input 
-                        type="text" 
-                        required 
-                        value={patientName} 
-                        onChange={(e) => setPatientName(e.target.value)} 
-                        placeholder="Enter full name" 
-                        className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                      <input
+                        type="text"
+                        required
+                        value={patientName}
+                        onChange={(e) => setPatientName(e.target.value)}
+                        placeholder="Enter full name"
+                        className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       />
                     </div>
-
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Age <span className="text-red-500">*</span></label>
-                        <input 
-                          type="number" 
-                          required 
-                          value={patientAge} 
-                          onChange={(e) => setPatientAge(e.target.value)} 
-                          placeholder="Age" 
+                        <input
+                          type="number"
+                          required
+                          value={patientAge}
+                          onChange={(e) => setPatientAge(e.target.value)}
+                          placeholder="Age"
                           min="1"
-                          className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                          className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Gender <span className="text-red-500">*</span></label>
-                        <select 
-                          required 
-                          value={patientGender} 
+                        <select
+                          required
+                          value={patientGender}
                           onChange={(e) => setPatientGender(e.target.value)}
                           className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
@@ -356,46 +321,43 @@ const HospitalDetails = () => {
                         </select>
                       </div>
                     </div>
-
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Phone Number <span className="text-red-500">*</span></label>
-                      <input 
-                        type="tel" 
-                        required 
-                        value={patientPhone} 
-                        onChange={(e) => setPatientPhone(e.target.value)} 
-                        placeholder="01XXXXXXXXX" 
-                        className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                      <input
+                        type="tel"
+                        required
+                        value={patientPhone}
+                        onChange={(e) => setPatientPhone(e.target.value)}
+                        placeholder="01XXXXXXXXX"
+                        className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       />
                     </div>
-
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
                         {bookingType === 'doctor' ? 'Problem / Symptoms' : 'Additional Notes'}
                       </label>
-                      <textarea 
-                        value={patientProblem} 
-                        onChange={(e) => setPatientProblem(e.target.value)} 
+                      <textarea
+                        value={patientProblem}
+                        onChange={(e) => setPatientProblem(e.target.value)}
                         placeholder={bookingType === 'doctor' ? "Describe symptoms or reason for visit..." : "Any special instructions..."}
                         rows={3}
                         className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
                       />
                     </div>
-
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Preferred Date <span className="text-red-500">*</span></label>
-                      <input 
-                        type="date" 
-                        required 
-                        value={appointmentDate} 
-                        onChange={(e) => setAppointmentDate(e.target.value)} 
-                        className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                      <input
+                        type="date"
+                        required
+                        value={appointmentDate}
+                        onChange={(e) => setAppointmentDate(e.target.value)}
+                        className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       />
                     </div>
                   </div>
 
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     disabled={bookingSubmitLoading}
                     className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-2xl shadow-lg transition-all disabled:bg-gray-300 disabled:cursor-not-allowed text-base"
                   >
