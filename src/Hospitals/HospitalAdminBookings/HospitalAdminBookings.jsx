@@ -1,27 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 const HospitalAdminBookings = ({ adminEmail = "hospital2@gmail.com" }) => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Sorting & Filtering States
+  const [sortType, setSortType] = useState('all'); // 'all', 'today', 'doctor', 'test'
+  const [dateSort, setDateSort] = useState('newest'); // 'newest', 'oldest'
 
   const fetchBookings = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      console.log(`🔍 Fetching bookings for: ${adminEmail}`);
-
       const response = await axios.get(
         `http://localhost:3000/hospitals/bookings/${adminEmail}`
       );
 
-      console.log("✅ Raw Response:", response.data);
-
       const data = Array.isArray(response.data) ? response.data : [];
-      console.log(`✅ Total Bookings Received: ${data.length}`);
-
       setBookings(data);
     } catch (err) {
       console.error("❌ Fetch Error:", err.response?.data || err.message);
@@ -35,8 +36,34 @@ const HospitalAdminBookings = ({ adminEmail = "hospital2@gmail.com" }) => {
     fetchBookings();
   }, [adminEmail]);
 
+  // Filtered & Sorted Data
+  const filteredBookings = useMemo(() => {
+    let result = [...bookings];
+
+    // Filter by Type
+    if (sortType === 'doctor') {
+      result = result.filter(b => b.bookingType === 'doctor');
+    } else if (sortType === 'test') {
+      result = result.filter(b => b.bookingType === 'test');
+    } else if (sortType === 'today') {
+      const today = new Date().toISOString().split('T')[0];
+      result = result.filter(b => 
+        new Date(b.appointmentDate).toISOString().split('T')[0] === today
+      );
+    }
+
+    // Sort by Date
+    result.sort((a, b) => {
+      const dateA = new Date(a.appointmentDate);
+      const dateB = new Date(b.appointmentDate);
+      return dateSort === 'newest' ? dateB - dateA : dateA - dateB;
+    });
+
+    return result;
+  }, [bookings, sortType, dateSort]);
+
   const handleStatusUpdate = async (id, newStatus) => {
-    if (!window.confirm(`Mark as ${newStatus}?`)) return;
+    if (!window.confirm(`Mark this booking as ${newStatus}?`)) return;
 
     try {
       const response = await axios.patch(
@@ -45,13 +72,33 @@ const HospitalAdminBookings = ({ adminEmail = "hospital2@gmail.com" }) => {
       );
 
       if (response.data.success) {
-        alert(`Booking ${newStatus} successfully!`);
+        Swal.fire({
+          title: 'Success!',
+          text: `Booking marked as ${newStatus}`,
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
         fetchBookings();
       }
     } catch (error) {
       console.error(error);
-      alert("Failed to update status.");
+      Swal.fire({
+        title: 'Error',
+        text: "Failed to update status.",
+        icon: 'error'
+      });
     }
+  };
+
+  const openDetailsModal = (booking) => {
+    setSelectedBooking(booking);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedBooking(null);
   };
 
   if (loading) return <div className="text-center py-10 text-lg">Loading Bookings...</div>;
@@ -69,15 +116,63 @@ const HospitalAdminBookings = ({ adminEmail = "hospital2@gmail.com" }) => {
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
-      <div className="max-w-6xl mx-auto bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="max-w-7xl mx-auto bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
-          <h2 className="text-2xl font-bold">🏥 Hospital Bookings</h2>
-          <p className="text-indigo-100 text-sm mt-1">Total: {bookings.length} bookings</p>
+          <h2 className="text-2xl font-bold">🏥 Hospital Bookings Management</h2>
+          <p className="text-indigo-100 text-sm mt-1">
+            Total: {bookings.length} | Showing: {filteredBookings.length}
+          </p>
         </div>
 
-        {bookings.length === 0 ? (
-          <div className="text-center py-20 text-gray-400">
-            No bookings found for this hospital yet.
+        {/* Sorting & Filter Buttons */}
+        <div className="p-5 border-b border-gray-100 bg-white flex flex-wrap gap-3">
+          <button 
+            onClick={() => setSortType('all')}
+            className={`px-5 py-2 rounded-xl text-sm font-medium transition ${sortType === 'all' ? 'bg-indigo-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+          >
+            All Bookings
+          </button>
+          
+          <button 
+            onClick={() => setSortType('today')}
+            className={`px-5 py-2 rounded-xl text-sm font-medium transition ${sortType === 'today' ? 'bg-indigo-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+          >
+            Today's Bookings
+          </button>
+
+          <button 
+            onClick={() => setSortType('doctor')}
+            className={`px-5 py-2 rounded-xl text-sm font-medium transition ${sortType === 'doctor' ? 'bg-indigo-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+          >
+            Doctor Appointments
+          </button>
+
+          <button 
+            onClick={() => setSortType('test')}
+            className={`px-5 py-2 rounded-xl text-sm font-medium transition ${sortType === 'test' ? 'bg-indigo-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+          >
+            Lab Tests
+          </button>
+
+          <div className="ml-auto flex gap-2">
+            <button 
+              onClick={() => setDateSort('newest')}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition ${dateSort === 'newest' ? 'bg-emerald-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+            >
+              Newest First
+            </button>
+            <button 
+              onClick={() => setDateSort('oldest')}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition ${dateSort === 'oldest' ? 'bg-emerald-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+            >
+              Oldest First
+            </button>
+          </div>
+        </div>
+
+        {filteredBookings.length === 0 ? (
+          <div className="text-center py-20 text-gray-400 text-lg">
+            No bookings found for selected filter.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -94,11 +189,13 @@ const HospitalAdminBookings = ({ adminEmail = "hospital2@gmail.com" }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
-                {bookings.map((booking) => (
+                {filteredBookings.map((booking) => (
                   <tr key={booking._id} className="hover:bg-slate-50">
                     <td className="p-4 pl-6">
                       <div className="font-medium">{booking.patientName}</div>
-                      <div className="text-xs text-gray-500">{booking.patientPhone}</div>
+                      <div className="text-xs text-gray-500">
+                        {booking.patientAge} yrs • {booking.patientGender}
+                      </div>
                     </td>
                     <td className="p-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${booking.bookingType === 'doctor' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
@@ -110,7 +207,7 @@ const HospitalAdminBookings = ({ adminEmail = "hospital2@gmail.com" }) => {
                         ? `Dr. ${booking.selectedDoctor?.name || 'N/A'}`
                         : booking.selectedTests?.map(t => t.name).join(', ') || 'N/A'}
                     </td>
-                    <td className="p-4">{new Date(booking.appointmentDate).toLocaleDateString()}</td>
+                    <td className="p-4">{new Date(booking.appointmentDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
                     <td className="p-4 font-bold text-emerald-600">৳ {booking.totalAmount}</td>
                     <td className="p-4">
                       <span className={`px-3 py-1 rounded-full text-xs uppercase font-bold ${
@@ -121,12 +218,30 @@ const HospitalAdminBookings = ({ adminEmail = "hospital2@gmail.com" }) => {
                       </span>
                     </td>
                     <td className="p-4 text-center">
-                      {booking.status === 'pending' && (
-                        <div className="flex gap-2 justify-center">
-                          <button onClick={() => handleStatusUpdate(booking._id, 'confirmed')} className="bg-green-600 text-white px-3 py-1 rounded text-xs">Approve</button>
-                          <button onClick={() => handleStatusUpdate(booking._id, 'cancelled')} className="bg-red-600 text-white px-3 py-1 rounded text-xs">Cancel</button>
-                        </div>
-                      )}
+                      <div className="flex gap-2 justify-center">
+                        <button 
+                          onClick={() => openDetailsModal(booking)}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-xs font-medium transition"
+                        >
+                          View Details
+                        </button>
+                        {booking.status === 'pending' && (
+                          <>
+                            <button 
+                              onClick={() => handleStatusUpdate(booking._id, 'confirmed')} 
+                              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium"
+                            >
+                              Approve
+                            </button>
+                            <button 
+                              onClick={() => handleStatusUpdate(booking._id, 'cancelled')} 
+                              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium"
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -135,6 +250,111 @@ const HospitalAdminBookings = ({ adminEmail = "hospital2@gmail.com" }) => {
           </div>
         )}
       </div>
+
+      {/* Modal (unchanged - only scrolling fixed) */}
+      {isModalOpen && selectedBooking && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-t-3xl">
+              <h3 className="text-xl font-bold">Booking Details</h3>
+              <button 
+                onClick={closeModal}
+                className="text-white hover:text-gray-200 text-3xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div>
+                <h4 className="font-bold text-lg mb-3 text-gray-800">👤 Patient Information</h4>
+                <div className="grid grid-cols-2 gap-4 bg-slate-50 p-5 rounded-2xl">
+                  <div>
+                    <p className="text-xs text-gray-500">Full Name</p>
+                    <p className="font-semibold">{selectedBooking.patientName}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Age & Gender</p>
+                    <p className="font-semibold">{selectedBooking.patientAge} years • {selectedBooking.patientGender}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Phone</p>
+                    <p className="font-semibold">{selectedBooking.patientPhone}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Booking Date</p>
+                    <p className="font-semibold">
+                      {new Date(selectedBooking.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-lg mb-2 text-gray-800">🩺 Problem / Symptoms</h4>
+                <div className="bg-amber-50 border border-amber-200 p-5 rounded-2xl text-gray-700 leading-relaxed">
+                  {selectedBooking.patientProblem || "No additional information provided."}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-lg mb-3 text-gray-800">📋 Service Details</h4>
+                <div className="bg-white border border-gray-200 p-5 rounded-2xl">
+                  <p className="flex justify-between py-2 border-b">
+                    <span className="text-gray-600">Booking Type</span>
+                    <span className="font-semibold capitalize">{selectedBooking.bookingType}</span>
+                  </p>
+                  <p className="flex justify-between py-2 border-b">
+                    <span className="text-gray-600">Appointment Date</span>
+                    <span className="font-semibold">{new Date(selectedBooking.appointmentDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                  </p>
+                  <p className="flex justify-between py-2 border-b">
+                    <span className="text-gray-600">Total Amount</span>
+                    <span className="font-bold text-emerald-600">৳ {selectedBooking.totalAmount}</span>
+                  </p>
+
+                  {selectedBooking.bookingType === 'doctor' && selectedBooking.selectedDoctor && (
+                    <p className="flex justify-between py-2">
+                      <span className="text-gray-600">Doctor</span>
+                      <span className="font-semibold">Dr. {selectedBooking.selectedDoctor.name} ({selectedBooking.selectedDoctor.specialty})</span>
+                    </p>
+                  )}
+
+                  {selectedBooking.bookingType === 'test' && selectedBooking.selectedTests?.length > 0 && (
+                    <div className="pt-3">
+                      <p className="text-gray-600 mb-2">Selected Tests:</p>
+                      <ul className="list-disc pl-5 space-y-1">
+                        {selectedBooking.selectedTests.map((test, idx) => (
+                          <li key={idx} className="text-gray-700">
+                            {test.name} <span className="text-emerald-600">(৳ {test.fee})</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-white">
+              <button 
+                onClick={closeModal}
+                className="px-6 py-2.5 border border-gray-300 rounded-xl font-medium hover:bg-gray-50"
+              >
+                Close
+              </button>
+              {selectedBooking.status === 'pending' && (
+                <button 
+                  onClick={() => { handleStatusUpdate(selectedBooking._id, 'confirmed'); closeModal(); }}
+                  className="px-6 py-2.5 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700"
+                >
+                  Approve Booking
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -14,9 +14,15 @@ const HospitalDetails = () => {
   const [bookingType, setBookingType] = useState(null);
   const [chosenDoctor, setChosenDoctor] = useState(null);
   const [chosenTests, setChosenTests] = useState([]);
+
+  // Patient Information
   const [patientName, setPatientName] = useState('');
+  const [patientAge, setPatientAge] = useState('');
+  const [patientGender, setPatientGender] = useState('');
   const [patientPhone, setPatientPhone] = useState('');
+  const [patientProblem, setPatientProblem] = useState('');
   const [appointmentDate, setAppointmentDate] = useState('');
+
   const [bookingSubmitLoading, setBookingSubmitLoading] = useState(false);
 
   useEffect(() => {
@@ -52,9 +58,6 @@ const HospitalDetails = () => {
 
   const { hospital, doctors, tests } = data;
 
-  // Debug: Hospital ID চেক
-  console.log("Current Hospital ID:", hospital?._id);
-
   const handleTestCheckboxChange = (test) => {
     setBookingType('test');
     setChosenDoctor(null);
@@ -77,20 +80,25 @@ const HospitalDetails = () => {
     if (bookingType === 'test') return chosenTests.reduce((sum, test) => sum + test.testFee, 0);
     return 0;
   };
-const handleBookingSubmit = async (e) => {
+
+  const handleBookingSubmit = async (e) => {
     e.preventDefault();
 
-    if (!patientName || !patientPhone || !appointmentDate) {
-      alert("Please fill in all patient details!");
+    if (!patientName || !patientAge || !patientGender || !patientPhone || !appointmentDate) {
+      Swal.fire({
+        title: 'Missing Information',
+        text: 'Please fill in all required patient details.',
+        icon: 'warning'
+      });
       return;
     }
 
     if (bookingType === 'doctor' && !chosenDoctor) {
-      alert("Please select a doctor.");
+      Swal.fire({ title: 'Error', text: 'Please select a doctor.', icon: 'warning' });
       return;
     }
     if (bookingType === 'test' && chosenTests.length === 0) {
-      alert("Please select at least one test.");
+      Swal.fire({ title: 'Error', text: 'Please select at least one test.', icon: 'warning' });
       return;
     }
 
@@ -98,13 +106,15 @@ const handleBookingSubmit = async (e) => {
 
     try {
       const payload = {
-        // এখানে পরিবর্তন করা হয়েছে: hospital._id এর পরিবর্তে hospital.hospitalId ব্যবহার হচ্ছে
-        hospitalId: hospital.hospitalId, 
+        hospitalId: hospital.hospitalId || hospital._id,
         hospitalName: hospital.hospitalName,
         bookingType,
         appointmentDate,
         patientName,
+        patientAge: parseInt(patientAge),
+        patientGender,
         patientPhone,
+        patientProblem: patientProblem.trim() || (bookingType === 'doctor' ? 'General consultation' : ''),
         totalAmount: calculateTotal(),
         selectedDoctor: bookingType === 'doctor' ? {
           id: chosenDoctor._id,
@@ -136,13 +146,8 @@ const handleBookingSubmit = async (e) => {
           confirmButtonColor: '#4f46e5'
         });
 
-        // ফর্ম রিসেট
-        setChosenDoctor(null);
-        setChosenTests([]);
-        setBookingType(null);
-        setPatientName('');
-        setPatientPhone('');
-        setAppointmentDate('');
+        // Reset form
+        resetBookingForm();
       }
     } catch (err) {
       console.error("Booking Error:", err);
@@ -155,6 +160,19 @@ const handleBookingSubmit = async (e) => {
       setBookingSubmitLoading(false);
     }
   };
+
+  const resetBookingForm = () => {
+    setChosenDoctor(null);
+    setChosenTests([]);
+    setBookingType(null);
+    setPatientName('');
+    setPatientAge('');
+    setPatientGender('');
+    setPatientPhone('');
+    setPatientProblem('');
+    setAppointmentDate('');
+  };
+
   return (
     <div className="bg-slate-50/50 min-h-screen pb-16">
       {/* Cover Photo */}
@@ -168,7 +186,7 @@ const handleBookingSubmit = async (e) => {
         </div>
       </div>
 
-      {/* Profile Overlap */}
+      {/* Profile Header */}
       <div className="container mx-auto p-4 max-w-6xl -mt-24 relative z-10">
         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 md:p-8 mb-8">
           <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-6">
@@ -177,7 +195,7 @@ const handleBookingSubmit = async (e) => {
               <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800">{hospital?.hospitalName}</h1>
               <p className="text-gray-500 mt-2">📍 {hospital?.fullAddress || hospital?.address}</p>
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-4 pt-4 border-t border-dashed border-gray-100 text-sm">
-                <div className="bg-slate-50 px-3 py-2 rounded-xl text-gray-700 font-medium">📞 Phone: {hospital?.phone}</div>
+                <div className="bg-slate-50 px-3 py-2 rounded-xl text-gray-700 font-medium">📞 {hospital?.phone}</div>
               </div>
             </div>
           </div>
@@ -187,10 +205,16 @@ const handleBookingSubmit = async (e) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <div className="flex gap-4 border-b border-gray-200 mb-6 bg-white p-2 rounded-2xl shadow-sm">
-              <button onClick={() => setActiveTab('doctors')} className={`flex-1 py-3 text-center font-bold rounded-xl transition-all ${activeTab === 'doctors' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500'}`}>
+              <button 
+                onClick={() => setActiveTab('doctors')} 
+                className={`flex-1 py-3 text-center font-bold rounded-xl transition-all ${activeTab === 'doctors' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100'}`}
+              >
                 👨‍⚕️ Doctors ({doctors?.length || 0})
               </button>
-              <button onClick={() => setActiveTab('tests')} className={`flex-1 py-3 text-center font-bold rounded-xl transition-all ${activeTab === 'tests' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500'}`}>
+              <button 
+                onClick={() => setActiveTab('tests')} 
+                className={`flex-1 py-3 text-center font-bold rounded-xl transition-all ${activeTab === 'tests' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100'}`}
+              >
                 🔬 Tests ({tests?.length || 0})
               </button>
             </div>
@@ -214,7 +238,7 @@ const handleBookingSubmit = async (e) => {
                       <div className="text-lg font-black text-emerald-600 mb-2">৳ {doctor.visitFee}</div>
                       <button 
                         onClick={() => handleDoctorSelect(doctor)}
-                        className={`px-4 py-2 text-sm font-bold rounded-xl transition-all ${chosenDoctor?._id === doctor._id ? 'bg-emerald-600 text-white' : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'}`}
+                        className={`px-6 py-2.5 text-sm font-bold rounded-xl transition-all ${chosenDoctor?._id === doctor._id ? 'bg-emerald-600 text-white' : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'}`}
                       >
                         {chosenDoctor?._id === doctor._id ? '✓ Selected' : 'Book Appointment'}
                       </button>
@@ -262,54 +286,120 @@ const handleBookingSubmit = async (e) => {
             )}
           </div>
 
-          {/* Booking Form */}
+          {/* Booking Sidebar */}
           <div id="booking-section" className="lg:col-span-1">
             <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-lg sticky top-6">
               <h2 className="text-xl font-extrabold text-gray-800 border-b border-gray-100 pb-3 mb-4">💳 Checkout Summary</h2>
               
               {!bookingType ? (
-                <div className="text-center py-8 text-gray-400 text-sm">
-                  Select a doctor or test to book appointment
+                <div className="text-center py-12 text-gray-400">
+                  Select a doctor or test to proceed
                 </div>
               ) : (
-                <form onSubmit={handleBookingSubmit} className="space-y-4">
+                <form onSubmit={handleBookingSubmit} className="space-y-5">
+                  {/* Service Summary */}
                   <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Selected Service</p>
+                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Selected Service</p>
                     {bookingType === 'doctor' && chosenDoctor && (
-                      <div className="mt-1 font-bold text-gray-800">Dr. {chosenDoctor.doctorName}</div>
+                      <div className="font-bold text-gray-800">Dr. {chosenDoctor.doctorName} ({chosenDoctor.specialty})</div>
                     )}
                     {bookingType === 'test' && (
-                      <div className="mt-1 text-sm text-gray-600">
+                      <div className="text-sm text-gray-600">
                         {chosenTests.length} test(s) selected
                       </div>
                     )}
-                    <div className="mt-3 pt-2 border-t border-gray-200 flex justify-between items-center">
-                      <span className="font-bold text-gray-700">Total:</span>
-                      <span className="text-xl font-black text-emerald-600">৳ {calculateTotal()}</span>
+                    <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
+                      <span className="font-bold text-gray-700">Total Amount:</span>
+                      <span className="text-2xl font-black text-emerald-600">৳ {calculateTotal()}</span>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Patient Full Name</label>
-                    <input type="text" required value={patientName} onChange={(e) => setPatientName(e.target.value)} placeholder="Enter patient name" className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                  </div>
+                  {/* Patient Information */}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Patient Full Name <span className="text-red-500">*</span></label>
+                      <input 
+                        type="text" 
+                        required 
+                        value={patientName} 
+                        onChange={(e) => setPatientName(e.target.value)} 
+                        placeholder="Enter full name" 
+                        className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                      />
+                    </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Contact Phone</label>
-                    <input type="tel" required value={patientPhone} onChange={(e) => setPatientPhone(e.target.value)} placeholder="Enter mobile number" className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                  </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Age <span className="text-red-500">*</span></label>
+                        <input 
+                          type="number" 
+                          required 
+                          value={patientAge} 
+                          onChange={(e) => setPatientAge(e.target.value)} 
+                          placeholder="Age" 
+                          min="1"
+                          className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Gender <span className="text-red-500">*</span></label>
+                        <select 
+                          required 
+                          value={patientGender} 
+                          onChange={(e) => setPatientGender(e.target.value)}
+                          className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                    </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Appointment Date</label>
-                    <input type="date" required value={appointmentDate} onChange={(e) => setAppointmentDate(e.target.value)} className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Phone Number <span className="text-red-500">*</span></label>
+                      <input 
+                        type="tel" 
+                        required 
+                        value={patientPhone} 
+                        onChange={(e) => setPatientPhone(e.target.value)} 
+                        placeholder="01XXXXXXXXX" 
+                        className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                        {bookingType === 'doctor' ? 'Problem / Symptoms' : 'Additional Notes'}
+                      </label>
+                      <textarea 
+                        value={patientProblem} 
+                        onChange={(e) => setPatientProblem(e.target.value)} 
+                        placeholder={bookingType === 'doctor' ? "Describe symptoms or reason for visit..." : "Any special instructions..."}
+                        rows={3}
+                        className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Preferred Date <span className="text-red-500">*</span></label>
+                      <input 
+                        type="date" 
+                        required 
+                        value={appointmentDate} 
+                        onChange={(e) => setAppointmentDate(e.target.value)} 
+                        className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                      />
+                    </div>
                   </div>
 
                   <button 
                     type="submit" 
                     disabled={bookingSubmitLoading}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-2xl shadow-lg transition-all disabled:bg-gray-300 disabled:cursor-not-allowed text-base"
                   >
-                    {bookingSubmitLoading ? 'Processing...' : 'Confirm Booking'}
+                    {bookingSubmitLoading ? 'Processing Booking...' : 'Confirm & Book Appointment'}
                   </button>
                 </form>
               )}

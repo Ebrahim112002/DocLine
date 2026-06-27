@@ -24,6 +24,8 @@ import ManageTests from "../Hospitals/ManageTests/ManageTests";
 import HospitalDetails from "../Components/HospitalsList/HospitalDetails";
 import HospitalsPage from "../Components/HospitalsList/HospitalsPage";
 import HospitalAdminBookings from "../Hospitals/HospitalAdminBookings/HospitalAdminBookings";
+import UserDashboard from "../Users/UserDashboard/UserDashboard";
+import UserHome from "../Users/UserHome/UserHome";
 
 
 export const router = createBrowserRouter([
@@ -126,5 +128,19 @@ export const router = createBrowserRouter([
 
 
     ]
-  }
+  },
+  {
+    path: "/user_dashboard",
+    element:<UserDashboard></UserDashboard>,
+    children: [
+      {
+        index: true,
+        element:<UserHome></UserHome>
+      },
+     
+
+
+
+    ]
+  },
 ]);
