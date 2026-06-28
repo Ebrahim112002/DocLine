@@ -22,13 +22,7 @@ const HospitalNavbar = () => {
 
       {/* Center/Left Title */}
       <div className="flex-1 flex items-center gap-4">
-          <button 
-      onClick={() => navigate('/')} // 🎯 এই বাটনে ক্লিক করলে সরাসরি মূল হোমে নিয়ে যাবে
-      className="btn btn-ghost rounded-xl bg-blue-400 font-bold flex items-center gap-2 text-lg text-white hover:bg-blue-500 transition-colors"
-      type="button"
-    >
-      🏠 Back to Home
-    </button>
+         
         <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 bg-blue-50 text-blue-600 rounded-full">
           Hospital Admin Panel
         </span>

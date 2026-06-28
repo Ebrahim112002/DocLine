@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Building, Stethoscope, Layers, CalendarCheck, Users, ClipboardList, ShieldAlert, ArrowLeftRight } from 'lucide-react';
 import HospitalNavbar from '../HospitalNavbar/HospitalNavbar';
+import Logo from '../../hook/Logo';
 
 const HospitalDashboardLayout = () => {
   const location = useLocation();
@@ -11,7 +12,7 @@ const HospitalDashboardLayout = () => {
     { name: 'Doctors', path: '/hospital_admin_dashboard/doctors', icon: Stethoscope },
     { name: 'Manage Tests', path: '/hospital_admin_dashboard/manageTests', icon: Layers },
     { name: 'Manage Appointments', path: '/hospital_admin_dashboard/manageBookings', icon: CalendarCheck },
-    { name: 'Queue Management', path: '/hospital_admin_dashboard/queue', icon: ArrowLeftRight },
+    { name: 'Queue Management', path: '/hospital_admin_dashboard/Queue_management', icon: ArrowLeftRight },
     { name: 'Assistants', path: '/hospital_admin_dashboard/manageAssistants', icon: Users },
     { name: 'Reports', path: '/hospital_dashboard/reports', icon: ClipboardList },
   ];
@@ -36,10 +37,8 @@ const HospitalDashboardLayout = () => {
           <div>
             {/* Logo Section */}
             <div className="flex items-center gap-3 px-3 py-4 mb-6 border-b border-gray-50">
-              <div className="p-2 bg-blue-600 text-white rounded-xl shadow-md shadow-blue-100">
-                <ShieldAlert className="w-6 h-6" />
-              </div>
-              <span className="text-xl font-black text-gray-900 tracking-tight">DocLine <span className="text-blue-600 font-medium text-xs">HOSPITAL</span></span>
+              
+              <span className="text-xl font-black text-gray-900 tracking-tight"><Logo></Logo> <span className="text-blue-600 font-medium text-xs">HOSPITAL</span></span>
             </div>
 
             {/* Nav Links */}

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router';
 import { AuthContext } from '../../Context/AuthContext';
+import Logo from '../../hook/Logo';
 
 
 const MotionNavLink = motion(NavLink);
@@ -26,6 +27,8 @@ const getDashboardRoute = () => {
 
   if (role === 'admin') return '/admin_dashboard';
   if (role === 'hospital_admin') return '/hospital_admin_dashboard';
+  if (role === 'doctor') return '/dashboard';
+  if (role === 'assistant') return '/assis_dashboard';
   return '/user_dashboard';
 };
 
@@ -69,21 +72,7 @@ const getDashboardRoute = () => {
         <div className="flex items-center justify-between h-20 gap-4">
           
           {/* Left - Logo */}
-          <NavLink to="/" className="flex items-center gap-3 flex-shrink-0 cursor-pointer group">
-            <motion.div 
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-11 h-11 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center text-white shadow-md shadow-blue-500/20"
-            >
-              <HeartPulse className="w-6 h-6 animate-pulse" />
-            </motion.div>
-            <div className="hidden sm:block">
-              <h1 className="text-2xl font-bold text-gray-900 tracking-tight whitespace-nowrap">
-                Doc<span className="text-blue-600">Line</span>
-              </h1>
-              <p className="text-xs text-blue-600 -mt-1 font-medium whitespace-nowrap">আপনার বিশ্বস্ত স্বাস্থ্য সঙ্গী</p>
-            </div>
-          </NavLink>
+         <Logo></Logo>
 
           {/* Center - Navigation Links (unchanged) */}
           <div className="hidden lg:flex items-center justify-center gap-6 xl:gap-8 flex-1">
@@ -106,7 +95,7 @@ const getDashboardRoute = () => {
               
               <div className="absolute top-full left-0 mt-1 pt-2 w-60 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-200 z-50">
                 <motion.div initial="hidden" whileInView="visible" variants={dropdownVariants} className="bg-white rounded-2xl shadow-xl p-3 border border-gray-100">
-                  <MotionNavLink whileHover={{ x: 4 }} to="/doctors" className="flex items-center gap-3 p-3 rounded-xl text-gray-700 hover:bg-blue-50/60 hover:text-blue-600">
+                  <MotionNavLink whileHover={{ x: 4 }} to="/allDoctors" className="flex items-center gap-3 p-3 rounded-xl text-gray-700 hover:bg-blue-50/60 hover:text-blue-600">
                     <Stethoscope className="w-4 h-4" />
                     <span className="text-sm font-medium">ডাক্তার খুঁজুন</span>
                   </MotionNavLink>
@@ -114,16 +103,12 @@ const getDashboardRoute = () => {
                     <Building2 className="w-4 h-4" />
                     <span className="text-sm font-medium">হাসপাতাল খুঁজুন</span>
                   </MotionNavLink>
-                  <MotionNavLink whileHover={{ x: 4 }} to="/departments" className="flex items-center gap-3 p-3 rounded-xl text-gray-700 hover:bg-blue-50/60 hover:text-blue-600">
-                    <Layers className="w-4 h-4" />
-                    <span className="text-sm font-medium">বিশেষজ্ঞ বিভাগ</span>
-                  </MotionNavLink>
                 </motion.div>
               </div>
             </div>
 
             {/* Other links unchanged */}
-            <MotionNavLink whileHover={{ y: -2 }} to="/appointments" className={({ isActive }) => `flex items-center gap-2 font-medium text-[15px] transition-colors group whitespace-nowrap ${isActive ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'}`}>
+            <MotionNavLink whileHover={{ y: -2 }} to="/allDoctors" className={({ isActive }) => `flex items-center gap-2 font-medium text-[15px] transition-colors group whitespace-nowrap ${isActive ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'}`}>
               <Calendar className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
               <span>অ্যাপয়েন্টমেন্ট নিন</span>
             </MotionNavLink>

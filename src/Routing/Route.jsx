@@ -28,6 +28,19 @@ import UserDashboard from "../Users/UserDashboard/UserDashboard";
 import UserHome from "../Users/UserHome/UserHome";
 import UserProfile from "../Users/UserProfile/UserProfile";
 import UserBookings from "../Users/UserBookings/UserBookings";
+import UserQueue from "../Users/UserQueue/UserQueue";
+import Queue_manage from "../Hospitals/Queu management/Queue_manage";
+import DashboardLayout from "../Doctor+assistant/DashboardLayout/DashboardLayout";
+import DashboardHome from "../Doctor+assistant/DashboardHome/DashboardHome";
+import DoctorMyProfile from "../Doctor+assistant/Doctors/DoctorMyProfile/DoctorMyProfile";
+import DoctorSchedules from "../Doctor+assistant/Doctors/DoctorSchedules/DoctorSchedules";
+import DoctorLiveQueue from "../Doctor+assistant/Doctors/DoctorLiveQueue/DoctorLiveQueue";
+import AssistantLayout from "../Doctor+assistant/Assistatn/AssistantLayout/AssistantLayout";
+import AssistantHome from "../Doctor+assistant/Assistatn/AssistantHome/AssistantHome";
+import AssistantLiveQueue from "../Doctor+assistant/Assistatn/AssistantLiveQueue/AssistantLiveQueue";
+import AssistantSchedule from "../Doctor+assistant/Assistatn/AssistantSchedule/AssistantSchedule";
+import AssistantMyProfile from "../Doctor+assistant/Assistatn/AssistantMyProfile/AssistantMyProfile";
+import AllDoctors from "../Components/All_doctors/AllDoctors";
 
 
 export const router = createBrowserRouter([
@@ -55,6 +68,10 @@ export const router = createBrowserRouter([
       {
         path: '/login',
         element: <Login></Login>
+      },
+      {
+        path: '/allDoctors',
+        element: <AllDoctors></AllDoctors>
       },
       {
         path: "/hospitals",
@@ -125,6 +142,10 @@ export const router = createBrowserRouter([
       {
         path: "manageBookings",
         element: <HospitalAdminBookings></HospitalAdminBookings>
+      },
+      {
+        path: "Queue_management",
+        element: <Queue_manage></Queue_manage>
       }
 
 
@@ -146,6 +167,62 @@ export const router = createBrowserRouter([
       {
         path: "bookings",
         element: <UserBookings></UserBookings>
+      },
+      {
+        path: "serial",
+        element: <UserQueue></UserQueue>
+      },
+     
+
+
+
+    ]
+  },
+  {
+    path: "/dashboard",
+    element:<DashboardLayout></DashboardLayout>,
+    children: [
+      {
+        index: true,
+        element:<DashboardHome></DashboardHome>
+      },
+      {
+       path:'doctorProfile',
+        element:<DoctorMyProfile></DoctorMyProfile>
+      },
+      {
+       path:'doctorSchedules',
+        element:<DoctorSchedules></DoctorSchedules>
+      },
+      {
+       path:'doctorLiveQueue',
+        element:<DoctorLiveQueue></DoctorLiveQueue>
+      },
+     
+
+
+
+    ]
+  },
+  {
+    path: "/assis_dashboard",
+    element:<AssistantLayout></AssistantLayout>,
+    children: [
+      {
+        index: true,
+        element:<AssistantHome></AssistantHome>
+      },
+         {
+       path:'assistantProfile',
+        element:<AssistantMyProfile></AssistantMyProfile>
+      },
+      {
+       path:'assistantSchedules',
+      element:<AssistantSchedule></AssistantSchedule>
+      },
+      {
+       path:'assistantLiveQueue',
+        element:<AssistantLiveQueue></AssistantLiveQueue>
       },
      
 

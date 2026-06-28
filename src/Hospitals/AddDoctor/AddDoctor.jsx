@@ -159,7 +159,7 @@ const AddDoctor = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div className="form-control">
             <label className="label font-bold text-gray-700 text-xs mb-1">SPECIALTY *</label>
-            <select className="select select-bordered rounded-xl bg-gray-50/50" {...register('specialty', { required: true })}>
+            <select className="select select-bordered rounded-xl bg-white" {...register('specialty', { required: true })}>
               {specialties.map((spec, i) => <option key={i} value={spec}>{spec}</option>)}
             </select>
           </div>

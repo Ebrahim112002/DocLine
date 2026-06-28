@@ -4,6 +4,7 @@ import UserNavbar from '../UserNavbar/UserNavbar';
 import UserHome from '../UserHome/UserHome';
 import UserProfile from '../UserProfile/UserProfile';
 import UserBookings from '../UserBookings/UserBookings';
+import UserQueue from '../UserQueue/UserQueue';
 
 const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState('home');
@@ -15,7 +16,7 @@ const UserDashboard = () => {
       case 'appointments':
         return <UserBookings></UserBookings>;
       case 'serial':
-        return <div className="p-8 text-2xl font-semibold text-gray-700">My Serial Numbers Coming Soon...</div>;
+        return <UserQueue></UserQueue>;
       case 'profile':
         return <UserProfile />;
       default:
